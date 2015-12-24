@@ -3,13 +3,13 @@ import javafx.beans.property.SimpleStringProperty;
 public class Student {
 	private SimpleStringProperty number;
 	private SimpleStringProperty name;
-	private int score;
+	private SimpleStringProperty score;
 	
-	public Student(String number, String name, int score) {
+	public Student(String number, String name, String score) {
 		super();
 		this.number = new SimpleStringProperty(number);
 		this.name = new SimpleStringProperty(name);
-		this.score = score;
+		this.score = new SimpleStringProperty(score);
 	}
 
 	public String getNumber() {
@@ -28,12 +28,12 @@ public class Student {
 		this.name = new SimpleStringProperty(name);
 	}
 
-	public int getScore() {
-		return score;
+	public String getScore() {
+		return score.get();
 	}
 
-	public void setScore(int score) {
-		this.score = score;
+	public void setScore(String score) {
+		this.score = new SimpleStringProperty(score);
 	}
 	
 	
