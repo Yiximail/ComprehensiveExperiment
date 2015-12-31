@@ -3,7 +3,6 @@ package controller;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -14,11 +13,6 @@ import java.io.IOException;
 import javafx.collections.FXCollections;  
 import javafx.collections.ObservableList;
 import javafx.stage.FileChooser;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
 
 import display.Display;
 import object.*;
@@ -67,11 +61,13 @@ public class Controller{
 	}
 	
 	public static void saveStudentlist(String encoding){
-		FileChooser fileChooser1 = new FileChooser();
-	    fileChooser1.setTitle("保存文件");
-	    File file = fileChooser1.showSaveDialog(null);
-	    if ((file != null)&&(encoding=="ANSI")) {
+		FileChooser fileChooser = new FileChooser();
+	    fileChooser.setTitle("保存文件");
+	    fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+	    if (encoding=="ANSI") {
 	        try {
+	    	    fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("文本文件", "*.java"),new FileChooser.ExtensionFilter("所有文件", "*.*"));
+	    	    File file = fileChooser.showSaveDialog(null);
 	        	FileOutputStream fos = new FileOutputStream(file);
 	        	OutputStreamWriter osw = new OutputStreamWriter(fos);
 	        	int i=0;
@@ -85,10 +81,14 @@ public class Controller{
 	        	fos.close();
 	        } catch (IOException ex) {
 	             System.out.println(ex.getMessage());
+	        } catch (NullPointerException ex){
+	        	System.out.println(ex.getMessage());
 	        }
 	    }
-	    else if ((file != null)&&(encoding=="UTF-8")) {
+	    else if (encoding=="UTF-8") {
 	        try {
+	    	    fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("score文件", "*.score"),new FileChooser.ExtensionFilter("所有文件", "*.*"));
+	    	    File file = fileChooser.showSaveDialog(null);
 	        	FileOutputStream fos = new FileOutputStream(file);
 	        	OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 	        	int i=0;
@@ -102,6 +102,8 @@ public class Controller{
 	        	fos.close();
 	        } catch (IOException ex) {
 	             System.out.println(ex.getMessage());
+	        } catch (NullPointerException ex){
+	        	System.out.println(ex.getMessage());
 	        }
 	    }
 	}
@@ -109,41 +111,45 @@ public class Controller{
 	public static void openFile(String encoding){
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("打开文件");
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
 		File file = fileChooser.showOpenDialog(null);
 		if (file != null) {
-			final ObservableList<Student> studentlist = Controller.getStudentlist(file, encoding);
-			Display.getTable().setItems(studentlist);
-			Display.getLocate().setText("  " + file.getPath()+",共"+studentlist.size()+"人");
-			int sum=0,maxScore=0,minScore=100,aveScore,score;
-			int[] rank = {0,0,0,0,0};
-			for(Student s:studentlist){
-				score=Integer.parseInt(s.getScore());
-				sum += score;
-				if(maxScore<score) maxScore = score;
-				if(minScore>score) minScore = score;
-				if(score>=90)rank[0]++;
-				else if(score>=80) rank[1]++;
-				else if(score>=70) rank[2]++;
-				else if(score>=60) rank[3]++;
-				else rank[4]++;
-			}
-			Display.getMax().setText(maxScore+"");
-			Display.getMin().setText(minScore+"");
-			Display.getAve().setText(String.format("%.2f", (double)sum/studentlist.size()));
-			Display.getRank1().setText(rank[0]+"");
-			Display.getRank2().setText(rank[1]+"");
-			Display.getRank3().setText(rank[2]+"");
-			Display.getRank4().setText(rank[3]+"");
-			Display.getRank5().setText(rank[4]+"");
-			Display.getRate1().setText(String.format("%.2f", (double)rank[0]/studentlist.size()*100));
-			Display.getRate2().setText(String.format("%.2f", (double)rank[1]/studentlist.size()*100));
-			Display.getRate3().setText(String.format("%.2f", (double)rank[2]/studentlist.size()*100));
-			Display.getRate4().setText(String.format("%.2f", (double)rank[3]/studentlist.size()*100));
-			Display.getRate5().setText(String.format("%.2f", (double)rank[4]/studentlist.size()*100));
+			Display.setStudentlist(Controller.getStudentlist(file, encoding));
+			Display.getTable().setItems(Controller.getStudentlist(file, encoding));
+			Display.getLocate().setText("  " + file.getPath()+",共"+Controller.getStudentlist(file, encoding).size()+"人");
+			counting();
 		}
 	}
 	
-	
+	public static void counting(){
+		int sum=0,maxScore=0,minScore=100,aveScore,score;
+		int[] rank = {0,0,0,0,0};
+		int number = Display.getTable().getItems().size();
+		for(int i=0;i<number;i++){
+			score=Display.getScore(i);
+			sum += score;
+			if(maxScore<score) maxScore = score;
+			if(minScore>score) minScore = score;
+			if(score>=90)rank[0]++;
+			else if(score>=80) rank[1]++;
+			else if(score>=70) rank[2]++;
+			else if(score>=60) rank[3]++;
+			else rank[4]++;
+		}
+		Display.getMax().setText(maxScore+"");
+		Display.getMin().setText(minScore+"");
+		Display.getAve().setText(String.format("%.2f", (double)sum/number));
+		Display.getRank1().setText(rank[0]+"");
+		Display.getRank2().setText(rank[1]+"");
+		Display.getRank3().setText(rank[2]+"");
+		Display.getRank4().setText(rank[3]+"");
+		Display.getRank5().setText(rank[4]+"");
+		Display.getRate1().setText(String.format("%.2f", (double)rank[0]/number*100));
+		Display.getRate2().setText(String.format("%.2f", (double)rank[1]/number*100));
+		Display.getRate3().setText(String.format("%.2f", (double)rank[2]/number*100));
+		Display.getRate4().setText(String.format("%.2f", (double)rank[3]/number*100));
+		Display.getRate5().setText(String.format("%.2f", (double)rank[4]/number*100));
+	}
 	
 	public static void cleanFile(){
 		Display.getTable().setItems(null);

@@ -1,35 +1,37 @@
 package display;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import controller.Controller;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.stage.FileChooser;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
-import javafx.event.*;
 import object.Student;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TableColumn.CellEditEvent;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.control.cell.TextFieldTableCell;
 
 public class Display extends Application {
+	public static ObservableList<Student> studentlist = FXCollections.observableArrayList();
 	public static final TableView<Student> table = new TableView<>();
 	private static VBox mainpane = new VBox();
 	private static HBox hbox = new HBox();
@@ -48,9 +50,9 @@ public class Display extends Application {
 	private static GridPane countpane2 = new GridPane();
 	private static HBox countpane3 = new HBox();
 	private static TextField data = new TextField();
-	private static TableColumn numberCol = new TableColumn("学号");
-	private static TableColumn nameCol = new TableColumn("姓名");
-	private static TableColumn scoreCol = new TableColumn("成绩");
+	private static TableColumn<Student, String> numberCol = new TableColumn<>("学号");
+	private static TableColumn<Student, String> nameCol = new TableColumn<>("姓名");
+	private static TableColumn<Student, String> scoreCol = new TableColumn<>("成绩");
 	private static TextField max = new TextField();
 	private static TextField min = new TextField();
 	private static TextField ave = new TextField();
@@ -69,30 +71,77 @@ public class Display extends Application {
 		// TODO 自动生成的方法存根
 		Scene mainscene = new Scene(mainpane, 600, 550);
 		mainpane.getChildren().addAll(menuBar, check,hbox, locate);
-		
+		mainscene.getStylesheets().add("display/Display.css");
 		check.getChildren().addAll(new Label("输入学号、名字或成绩："),data);
 		check.setAlignment(Pos.CENTER_LEFT);
 		check.setSpacing(20);
 		check.setPadding(new Insets(10,10,10,10));
 		
+		data.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				// TODO Auto-generated method stub
+				
+				if(data.getText().length()!=0){
+					table.setItems(null);
+					ObservableList<Student> checklist = FXCollections.observableArrayList();
+					String str = data.getText();
+					for(Student s:studentlist){
+						if((s.getNumber().indexOf(str)>=0)||(s.getName().indexOf(str)>=0)||(s.getScore().indexOf(str)>=0))
+							checklist.add(s);
+					}
+					table.setItems(checklist);
+				}
+				else{
+					table.setItems(studentlist);
+				}
+			}
+		});
+		
 		hbox.getChildren().addAll(vbox, countpane);
 
 		menuBar.getMenus().addAll(menuFile);
-		menuFile.getItems().addAll(open1,save1,open2,save2,clear);
+		menuFile.getItems().addAll(open1,save1,new SeparatorMenuItem(),open2,save2,new SeparatorMenuItem(),clear);
 
-		numberCol.setPrefWidth(120);
+		numberCol.setPrefWidth(100);
 		numberCol.setCellValueFactory(new PropertyValueFactory<>("number"));
+		numberCol.setCellFactory(TextFieldTableCell.<Student>forTableColumn());
+		numberCol.setOnEditCommit(
+	            (CellEditEvent<Student, String> t) -> {
+	                ((Student) t.getTableView().getItems().get(
+	                        t.getTablePosition().getRow())
+	                        ).setNumber(t.getNewValue());
+	        });
 		nameCol.setPrefWidth(70);
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+		nameCol.setCellFactory(TextFieldTableCell.<Student>forTableColumn());
+		nameCol.setOnEditCommit(
+	            (CellEditEvent<Student, String> t) -> {
+	                ((Student) t.getTableView().getItems().get(
+	                        t.getTablePosition().getRow())
+	                        ).setName(t.getNewValue());
+	                Controller.counting();
+	        });
 		scoreCol.setPrefWidth(60);
 		scoreCol.setCellValueFactory(new PropertyValueFactory<>("score"));
+		scoreCol.setCellFactory(TextFieldTableCell.<Student>forTableColumn());
+		scoreCol.setOnEditCommit(
+	            (CellEditEvent<Student, String> t) -> {
+	                ((Student) t.getTableView().getItems().get(
+	                        t.getTablePosition().getRow())
+	                        ).setScore(t.getNewValue());
+	                Controller.counting();
+	        });
 		table.setEditable(true);
 		table.getColumns().addAll(numberCol, nameCol, scoreCol);
-		;
 		
 		vbox.setSpacing(5);
 		vbox.setPadding(new Insets(10, 10, 10, 10));
 		vbox.getChildren().addAll(new Label("成绩单"), table);
+		vbox.setStyle("-fx-stroke: black; -fx-fill: red;");
+		
+		
 		
 		countpane.getChildren().addAll(new Label("数据分析"),countpane1,countpane2,countpane3);
 		countpane.setPadding(new Insets(10, 10, 10, 10));
@@ -186,6 +235,8 @@ public class Display extends Application {
 		Button display1 = new Button("显示柱型分析图");
 		Button display2 = new Button("显示饼型分析图");
 		countpane3.getChildren().addAll(display1,display2);
+		display1.setOnAction(e -> barChart());
+		display2.setOnAction(e -> pieChart());
 		countpane3.setPadding(new Insets(30,10,10,10));
 		countpane3.setSpacing(40);
 		
@@ -196,6 +247,69 @@ public class Display extends Application {
 		primaryStage.show();
 
 		
+	}
+	
+	private void barChart(){
+		Stage bcstage = new Stage();
+		final NumberAxis x = new NumberAxis();
+        final CategoryAxis y = new CategoryAxis();
+        final BarChart<String,Number> bc = new BarChart<>(y,x);
+        
+        XYChart.Series series = new XYChart.Series();
+        int[] number = new int[5];
+        if(getRank1().getText().length()==0)number[0]=0;
+        else number[0]=Integer.parseInt(getRank1().getText());
+        if(getRank2().getText().length()==0)number[1]=0;
+        else number[1]=Integer.parseInt(getRank2().getText());
+        if(getRank3().getText().length()==0)number[2]=0;
+        else number[2]=Integer.parseInt(getRank3().getText());
+        if(getRank4().getText().length()==0)number[3]=0;
+        else number[3]=Integer.parseInt(getRank4().getText());
+        if(getRank5().getText().length()==0)number[4]=0;
+        else number[4]=Integer.parseInt(getRank5().getText());
+        series.getData().add(new XYChart.Data("优秀(90-100)",number[0]));
+        series.getData().add(new XYChart.Data("良好(80-89)",number[1]));
+        series.getData().add(new XYChart.Data("中等(70-79)",number[2]));
+        series.getData().add(new XYChart.Data("及格(60-69)",number[3]));
+        series.getData().add(new XYChart.Data("不及格(0-60)",number[4]));
+        
+        bc.getData().addAll(series);
+        bc.setLegendVisible(false);
+        bcstage.setScene(new Scene(bc,500,300));
+        bcstage.setTitle("柱形分析图");
+        bcstage.show();
+	}
+	
+	private void pieChart(){
+		Stage pcstage = new Stage();
+		int[] number = new int[5];
+        if(getRank1().getText().length()==0)number[0]=0;
+        else number[0]=Integer.parseInt(getRank1().getText());
+        if(getRank2().getText().length()==0)number[1]=0;
+        else number[1]=Integer.parseInt(getRank2().getText());
+        if(getRank3().getText().length()==0)number[2]=0;
+        else number[2]=Integer.parseInt(getRank3().getText());
+        if(getRank4().getText().length()==0)number[3]=0;
+        else number[3]=Integer.parseInt(getRank4().getText());
+        if(getRank5().getText().length()==0)number[4]=0;
+        else number[4]=Integer.parseInt(getRank5().getText());
+		ObservableList<PieChart.Data> pcData =
+                FXCollections.observableArrayList(
+                new PieChart.Data("优秀(90-100)", number[0]),
+                new PieChart.Data("良好(80-89)", number[1]),
+                new PieChart.Data("中等(70-79)", number[2]),
+                new PieChart.Data("及格(60-69)", number[3]),
+                new PieChart.Data("不及格(0-60)", number[4]));
+        final PieChart pc = new PieChart(pcData);
+        pc.setLegendVisible(false);
+        
+        pcstage.setScene(new Scene(pc,500,300));
+        pcstage.setTitle("饼型分析图");
+        pcstage.show();
+	}
+	
+	public static void setStudentlist(ObservableList<Student> list) {
+		studentlist = list;
 	}
 	
 	public static TableView<Student> getTable() {
@@ -265,7 +379,11 @@ public class Display extends Application {
 	public static TextField getRate5() {
 		return rate5;
 	}
-
+	
+	public static int getScore(int i){
+		return Integer.parseInt(table.getItems().get(i).getScore());
+	}
+	
 	public static void main(String[] args) {
 		launch(args);
 	}

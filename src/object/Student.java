@@ -16,24 +16,24 @@ public class Student {
 		return number.get();
 	}
 
-	public void setNumber(String number) {
-		this.number = new SimpleStringProperty(number);
+	public void setNumber(String num) {
+		number.set(num);
 	}
 
 	public String getName() {
 		return name.get();
 	}
 
-	public void setName(String name) {
-		this.name = new SimpleStringProperty(name);
+	public void setName(String nam) {
+		name.set(nam);
 	}
 
 	public String getScore() {
 		return score.get();
 	}
 
-	public void setScore(String score) {
-		this.score = new SimpleStringProperty(score);
+	public void setScore(String sco) {
+		score.set(sco);
 	}
 	
 	
